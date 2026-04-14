@@ -4,28 +4,33 @@ import path from 'path';
 import Database from 'better-sqlite3';
 import cors from 'cors';
 import { v4 as uuidv4 } from 'uuid';
+import 'dotenv/config';
 
 // SQLite ma'lumotlar bazasini yaratish (Preview muhiti uchun)
-const db = new Database('database.db');
+let db: any;
+try {
+  db = new Database('database.db');
+  // Jadvallarni yaratish
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS surveys (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      code TEXT UNIQUE NOT NULL,
+      questions TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    );
 
-// Jadvallarni yaratish
-db.exec(`
-  CREATE TABLE IF NOT EXISTS surveys (
-    id TEXT PRIMARY KEY,
-    title TEXT NOT NULL,
-    code TEXT UNIQUE NOT NULL,
-    questions TEXT NOT NULL,
-    created_at INTEGER NOT NULL
-  );
-
-  CREATE TABLE IF NOT EXISTS responses (
-    id TEXT PRIMARY KEY,
-    survey_id TEXT NOT NULL,
-    answers TEXT NOT NULL,
-    submitted_at INTEGER NOT NULL,
-    FOREIGN KEY (survey_id) REFERENCES surveys(id)
-  );
-`);
+    CREATE TABLE IF NOT EXISTS responses (
+      id TEXT PRIMARY KEY,
+      survey_id TEXT NOT NULL,
+      answers TEXT NOT NULL,
+      submitted_at INTEGER NOT NULL,
+      FOREIGN KEY (survey_id) REFERENCES surveys(id)
+    );
+  `);
+} catch (err) {
+  console.error('Database initialization error:', err);
+}
 
 async function startServer() {
   const app = express();
@@ -39,6 +44,7 @@ async function startServer() {
 
   // API Routes
   app.get('/api/surveys', (req, res) => {
+    if (!db) return res.status(500).json({ error: 'Database not initialized' });
     try {
       const surveys = db.prepare('SELECT * FROM surveys ORDER BY created_at DESC').all();
       res.json(surveys.map(s => ({
@@ -54,6 +60,7 @@ async function startServer() {
   });
 
   app.get('/api/surveys/:code', (req, res) => {
+    if (!db) return res.status(500).json({ error: 'Database not initialized' });
     try {
       const survey = db.prepare('SELECT * FROM surveys WHERE code = ?').get(req.params.code);
       if (!survey) return res.status(404).json({ error: 'Survey not found' });
@@ -70,6 +77,7 @@ async function startServer() {
   });
 
   app.post('/api/surveys', (req, res) => {
+    if (!db) return res.status(500).json({ error: 'Database not initialized' });
     const { title, code, questions } = req.body;
     const id = uuidv4();
     try {
@@ -82,6 +90,7 @@ async function startServer() {
   });
 
   app.put('/api/surveys/:id', (req, res) => {
+    if (!db) return res.status(500).json({ error: 'Database not initialized' });
     const { title, code, questions } = req.body;
     try {
       db.prepare('UPDATE surveys SET title = ?, code = ?, questions = ? WHERE id = ?')
@@ -93,6 +102,7 @@ async function startServer() {
   });
 
   app.delete('/api/surveys/:id', (req, res) => {
+    if (!db) return res.status(500).json({ error: 'Database not initialized' });
     try {
       db.transaction(() => {
         db.prepare('DELETE FROM responses WHERE survey_id = ?').run(req.params.id);
@@ -106,6 +116,7 @@ async function startServer() {
   });
 
   app.get('/api/responses/:surveyId', (req, res) => {
+    if (!db) return res.status(500).json({ error: 'Database not initialized' });
     try {
       const responses = db.prepare('SELECT * FROM responses WHERE survey_id = ? ORDER BY submitted_at DESC').all(req.params.surveyId);
       res.json(responses.map(r => ({
@@ -120,6 +131,7 @@ async function startServer() {
   });
 
   app.post('/api/responses', (req, res) => {
+    if (!db) return res.status(500).json({ error: 'Database not initialized' });
     const { surveyId, answers } = req.body;
     const id = uuidv4();
     try {
