@@ -1,0 +1,40 @@
+{
+  "entities": {
+    "Survey": {
+      "title": "Survey",
+      "description": "A survey created by an admin",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "The title of the survey" },
+        "code": { "type": "string", "description": "The unique code to access the survey" },
+        "questions": {
+          "type": "array",
+          "description": "List of questions in the survey"
+        },
+        "createdAt": { "type": "number", "description": "Timestamp of creation" }
+      },
+      "required": ["title", "code", "questions", "createdAt"]
+    },
+    "Response": {
+      "title": "Response",
+      "description": "A response to a survey",
+      "type": "object",
+      "properties": {
+        "surveyId": { "type": "string", "description": "ID of the survey" },
+        "answers": { "type": "array", "description": "List of answers" },
+        "submittedAt": { "type": "number", "description": "Timestamp of submission" }
+      },
+      "required": ["surveyId", "answers", "submittedAt"]
+    }
+  },
+  "firestore": {
+    "/surveys/{surveyId}": {
+      "schema": "Survey",
+      "description": "Collection of surveys"
+    },
+    "/responses/{responseId}": {
+      "schema": "Response",
+      "description": "Collection of survey responses"
+    }
+  }
+}
