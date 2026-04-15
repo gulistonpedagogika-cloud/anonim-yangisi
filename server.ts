@@ -1,6 +1,7 @@
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
+import fs from 'fs';
 import Database from 'better-sqlite3';
 import cors from 'cors';
 import { v4 as uuidv4 } from 'uuid';
@@ -38,6 +39,13 @@ async function startServer() {
 
   app.use(cors());
   app.use(express.json());
+
+  // Debugging middleware
+  app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    res.setHeader('X-App-Status', 'Running');
+    next();
+  });
 
   // API Health Check
   app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
@@ -148,19 +156,26 @@ async function startServer() {
     res.status(404).json({ error: `API route not found: ${req.method} ${req.url}` });
   });
 
-  // Vite middleware
-  if (process.env.NODE_ENV !== 'production') {
+  // Vite middleware or static serving
+  const isProduction = process.env.NODE_ENV === 'production';
+  const distPath = path.join(process.cwd(), 'dist');
+  const hasDist = fs.existsSync(distPath);
+
+  console.log(`Environment: ${process.env.NODE_ENV}, Has Dist: ${hasDist}`);
+
+  if (isProduction && hasDist) {
+    console.log('Serving static files from dist');
+    app.use(express.static(distPath));
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+  } else {
+    console.log('Starting Vite in middleware mode');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
     });
     app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
   }
 
   app.listen(PORT, '0.0.0.0', () => {
