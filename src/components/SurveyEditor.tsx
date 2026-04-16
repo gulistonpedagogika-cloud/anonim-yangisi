@@ -5,10 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Plus, Trash2, ArrowLeft, GripVertical } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft } from 'lucide-react';
 import { Question, QuestionType } from '../types';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
+import { surveyService } from '../services/surveyService';
 
 export default function SurveyEditor() {
   const { id } = useParams();
@@ -19,16 +20,13 @@ export default function SurveyEditor() {
 
   useEffect(() => {
     if (id) {
-      fetch(`/api/surveys`)
-        .then(res => res.json())
-        .then(data => {
-          const s = data.find((survey: any) => survey.id === id);
-          if (s) {
-            setTitle(s.title);
-            setCode(s.code);
-            setQuestions(s.questions);
-          }
-        });
+      surveyService.getSurveyById(id).then(s => {
+        if (s) {
+          setTitle(s.title);
+          setCode(s.code);
+          setQuestions(s.questions);
+        }
+      });
     }
   }, [id]);
 
@@ -72,23 +70,14 @@ export default function SurveyEditor() {
       return;
     }
 
-    const method = id ? 'PUT' : 'POST';
-    const url = id ? `/api/surveys/${id}` : '/api/surveys';
-
     try {
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, code, questions })
-      });
-
-      if (res.ok) {
-        toast.success('Saqlandi');
-        navigate('/admin');
+      if (id) {
+        await surveyService.updateSurvey(id, { title, code, questions });
       } else {
-        const data = await res.json();
-        toast.error(data.error || 'Xatolik yuz berdi');
+        await surveyService.createSurvey({ title, code, questions });
       }
+      toast.success('Saqlandi');
+      navigate('/admin');
     } catch (err) {
       toast.error('Xatolik yuz berdi');
     }

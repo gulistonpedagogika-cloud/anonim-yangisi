@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { surveyService } from '../services/surveyService';
 
 export default function Home() {
   const [code, setCode] = useState('');
@@ -14,8 +15,8 @@ export default function Home() {
     if (!code.trim()) return;
 
     try {
-      const res = await fetch(`/api/surveys/${code}`);
-      if (res.ok) {
+      const survey = await surveyService.getSurveyByCode(code);
+      if (survey) {
         navigate(`/survey/${code}`);
       } else {
         toast.error('Sorovnoma kodi noto‘g‘ri');

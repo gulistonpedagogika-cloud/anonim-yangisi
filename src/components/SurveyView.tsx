@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Survey } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
+import { surveyService } from '../services/surveyService';
 
 export default function SurveyView() {
   const { code } = useParams();
@@ -19,15 +20,13 @@ export default function SurveyView() {
   useEffect(() => {
     const fetchSurvey = async () => {
       try {
-        const res = await fetch(`/api/surveys/${code}`);
-        if (!res.ok) {
-          const text = await res.text();
-          console.error(`Survey fetch error (${res.status}):`, text);
+        if (!code) return;
+        const data = await surveyService.getSurveyByCode(code);
+        if (!data) {
           toast.error('Sorovnoma topilmadi');
           navigate('/');
           return;
         }
-        const data = await res.json();
         setSurvey(data);
       } catch (err) {
         console.error('Fetch error:', err);
@@ -68,19 +67,15 @@ export default function SurveyView() {
     }
 
     try {
-      const res = await fetch('/api/responses', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          surveyId: survey.id,
-          answers: Object.entries(answers).map(([questionId, value]) => ({ questionId, value }))
-        })
+      await surveyService.submitResponse({
+        surveyId: survey.id,
+        answers: Object.entries(answers).map(([questionId, value]) => ({ 
+          questionId, 
+          value: value as string | number | string[] 
+        }))
       });
-
-      if (res.ok) {
-        setSubmitted(true);
-        toast.success('Javoblaringiz qabul qilindi');
-      }
+      setSubmitted(true);
+      toast.success('Javoblaringiz qabul qilindi');
     } catch (err) {
       toast.error('Xatolik yuz berdi');
     }

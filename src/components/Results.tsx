@@ -11,6 +11,7 @@ import {
 import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
 import { toast } from 'sonner';
+import { surveyService } from '../services/surveyService';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
@@ -26,23 +27,16 @@ export default function Results() {
     const fetchData = async () => {
       if (!id) return;
       try {
-        const [surveyRes, responsesRes] = await Promise.all([
-          fetch(`/api/surveys`),
-          fetch(`/api/responses/${id}`)
+        const [surveyData, responsesData] = await Promise.all([
+          surveyService.getSurveyById(id),
+          surveyService.getResponses(id)
         ]);
 
-        if (surveyRes.ok) {
-          const surveys = await surveyRes.json();
-          const s = surveys.find((survey: any) => survey.id === id);
-          if (s) setSurvey(s);
-        }
-
-        if (responsesRes.ok) {
-          const data = await responsesRes.json();
-          setResponses(data);
-        }
+        if (surveyData) setSurvey(surveyData);
+        if (responsesData) setResponses(responsesData);
       } catch (err) {
         console.error('Results fetch error:', err);
+        toast.error('Ma’lumotlarni yuklashda xatolik');
       }
     };
     fetchData();

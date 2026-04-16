@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, BarChart2, Edit2, Trash2, ExternalLink } from 'lucide-react';
 import { Survey } from '../types';
 import { toast } from 'sonner';
+import { surveyService } from '../services/surveyService';
 
 export default function Admin() {
   const [surveys, setSurveys] = useState<Survey[]>([]);
@@ -19,24 +20,12 @@ export default function Admin() {
 
   const fetchSurveys = async () => {
     try {
-      const res = await fetch('/api/surveys');
-      if (!res.ok) {
-        const text = await res.text();
-        console.error(`Server error (${res.status}):`, text);
-        throw new Error(`Server returned ${res.status}`);
-      }
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        setSurveys(data);
-      } else {
-        console.error('Expected array of surveys, got:', data);
-        setSurveys([]);
-        toast.error('Ma’lumotlarni yuklashda xatolik');
-      }
+      const data = await surveyService.getSurveys();
+      setSurveys(data);
     } catch (err) {
       console.error('Fetch error:', err);
       setSurveys([]);
-      toast.error('Server bilan ulanishda xatolik');
+      toast.error('Ma’lumotlarni yuklashda xatolik');
     }
   };
 
@@ -48,11 +37,13 @@ export default function Admin() {
       return;
     }
     
-    const res = await fetch(`/api/surveys/${id}`, { method: 'DELETE' });
-    if (res.ok) {
+    try {
+      await surveyService.deleteSurvey(id);
       toast.success('O‘chirildi');
       setDeleteConfirmId(null);
       fetchSurveys();
+    } catch (err) {
+      toast.error('O‘chirishda xatolik');
     }
   };
 

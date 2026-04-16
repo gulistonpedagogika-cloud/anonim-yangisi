@@ -16,7 +16,6 @@ export default defineConfig(({mode}) => {
       },
     },
     server: {
-      middlewareMode: true,
       hmr: process.env.DISABLE_HMR !== 'true',
     },
   };
