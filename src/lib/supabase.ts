@@ -1,13 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL || 'https://vdjzscnjrfjxbrfqrjoi.supabase.co';
+const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_rUkf5BPd1AwDG0-Ih_iTDg_uZY3KF6B';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase URL yoki Anon Key topilmadi. Iltimos, sozlamalarni tekshiring.');
-}
-
-export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co', 
-  supabaseAnonKey || 'placeholder'
-);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
